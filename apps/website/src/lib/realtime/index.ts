@@ -6,6 +6,8 @@ export { controlStore } from './stores/control-store';
 export { screenStore } from './stores/screen-store';
 export type {
     BusMessage,
+    ControlAuthMessage,
+    ControlAuthResultMessage,
     ControlSetMessage,
     EngineConnectionState,
     EngineRole,

@@ -1,6 +1,6 @@
 import { PauseIcon, PlayIcon } from '@phosphor-icons/react';
 import { createFileRoute } from '@tanstack/react-router';
-import { useMemo } from 'react';
+import { useMemo, useState, type FormEvent } from 'react';
 
 import { Button } from '../components/button';
 import { Slider } from '../components/slider';
@@ -51,12 +51,15 @@ function ControlPage() {
     const { operator } = Route.useSearch();
     const story = useControlStore((state) => state.story);
     const connection = useControlStore((state) => state.connection);
+    const auth = useControlStore((state) => state.auth);
     const { data, error } = useStoryData();
 
     const nameToId = useMemo(
         () => new Map((data?.stationIndex ?? []).map(([id, name]) => [name, id])),
         [data]
     );
+
+    if (auth !== 'ok') return <PasswordGate auth={auth} />;
 
     if (!data) {
         return (
@@ -199,6 +202,54 @@ function ControlPage() {
                     </select>
                 </section>
             </div>
+        </main>
+    );
+}
+
+const AUTH_MESSAGES: Record<string, string> = {
+    checking: 'Checking…',
+    needed: '',
+    wrong: 'That password isn’t right. Try again.',
+    locked: 'Too many wrong attempts from this device. Wait a minute, then try again.'
+};
+
+// The presenter's controls are locked until the password is accepted by the bus. The wall
+// keeps playing by itself meanwhile; screens and visitors' phones never need a password.
+function PasswordGate({ auth }: { auth: string }) {
+    const [password, setPassword] = useState('');
+    const submit = (event: FormEvent) => {
+        event.preventDefault();
+        if (password.trim()) controlEngine.unlock(password);
+    };
+    return (
+        <main className="flex h-screen items-center justify-center bg-[var(--background)] p-4 text-[var(--foreground)]">
+            <form
+                onSubmit={submit}
+                className="flex w-full max-w-sm flex-col gap-3 rounded-lg border border-[var(--border)] bg-[var(--card)] p-5"
+            >
+                <h1 className="text-sm font-semibold">The Londoners who never stopped</h1>
+                <p className="text-xs text-[var(--muted-foreground)]">
+                    Presenter controls. Enter the password shown in the terminal where the app is
+                    running (or the one set with CONTROL_PASSWORD).
+                </p>
+                <input
+                    type="password"
+                    autoComplete="current-password"
+                    value={password}
+                    onChange={(event) => setPassword(event.target.value)}
+                    aria-label="Presenter password"
+                    placeholder="Password"
+                    className="rounded-md border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm"
+                />
+                <Button type="submit" variant="highlight" disabled={auth === 'checking'}>
+                    Unlock
+                </Button>
+                {AUTH_MESSAGES[auth] && (
+                    <p role="status" className="text-xs text-[var(--muted-foreground)]">
+                        {AUTH_MESSAGES[auth]}
+                    </p>
+                )}
+            </form>
         </main>
     );
 }

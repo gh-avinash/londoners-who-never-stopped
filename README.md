@@ -26,13 +26,13 @@ pnpm dev
 Then open these on the same computer (or swap `localhost` for the "Network" address that
 `pnpm dev` prints, to open them from another device):
 
-| Address                              | What it is                                                                                 |
-| ------------------------------------ | ------------------------------------------------------------------------------------------ |
-| http://localhost:5780/wall           | **The whole wall on one monitor**, animated. Best place to start.                          |
-| http://localhost:5780/control        | The presenter's tablet: chapters, guided tour, timeline, what-if switch, station spotlight |
-| http://localhost:5780/screen?c=0&r=0 | One physical screen (column `c` 0–15, row `r` 0–3), as the DO runs it                      |
-| http://localhost:5780/               | The starter's simulator (a few live screens plus the tablet)                               |
-| http://localhost:5780/visit          | The visitor page that the wall's QR code opens on a phone                                  |
+| Address                              | What it is                                                                                       |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------ |
+| http://localhost:5780/wall           | **The whole wall on one monitor**, animated. Best place to start.                                |
+| http://localhost:5780/control        | The presenter's tablet (password-protected): chapters, guided tour, timeline, what-if, spotlight |
+| http://localhost:5780/screen?c=0&r=0 | One physical screen (column `c` 0–15, row `r` 0–3), as the DO runs it                            |
+| http://localhost:5780/               | The starter's simulator (a few live screens plus the tablet)                                     |
+| http://localhost:5780/visit          | The visitor page that the wall's QR code opens on a phone                                        |
 
 Leave it alone for 45 seconds and the wall plays the story by itself, on a loop.
 
@@ -41,8 +41,17 @@ and the wall's QR code always contains this computer's network address (a phone 
 `localhost`), so scanning works for any phone on that Wi-Fi. For phones on any network, put the
 app behind a public address and set `VITE_PUBLIC_URL` to it before starting.
 
-Because the app is visible on the local network, anyone on that Wi-Fi can open `/control`
-(there is no password yet). On shared or public Wi-Fi, stop the server when you're not using it.
+**Presenter password.** The tablet page (`/control`) asks for a password; the wall's screens
+and the visitors' QR page don't. When the app starts it prints the password in the terminal:
+
+```
+  Presenter password for /control: k7m2xq9p
+```
+
+A new one is generated each time the server starts. To choose your own, create
+`apps/website/.env.local` (never committed) containing `CONTROL_PASSWORD=your-password`. The
+tablet remembers the password until its browser tab is closed. Five wrong attempts lock a
+device out for a minute.
 
 The live panel needs internet access to `api.tfl.gov.uk` (no API key). Everything else runs
 from data in the repo.

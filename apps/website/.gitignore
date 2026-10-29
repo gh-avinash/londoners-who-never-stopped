@@ -26,3 +26,7 @@ dist-ssr
 # Build output (TanStack Start / Nitro)
 .output
 .tanstack
+
+# Local settings such as CONTROL_PASSWORD - never committed
+.env
+.env.*
