@@ -29,7 +29,7 @@ const WEEK_TRANSITION_MS = 250;
 // Switching between reality and the prediction glides slowly so the change can be followed.
 const WHAT_IF_TRANSITION_MS = 2000;
 
-// Dot area is proportional to people: radius = k * sqrt(taps). King's Cross St Pancras
+// Dot area is proportional to taps (entries + exits): radius = k * sqrt(taps). King's Cross St Pancras
 // (~270k taps/day in 2019) gets ~140 px; even in lockdown the busiest stations stay visible
 // from across the room.
 const RADIUS_PER_SQRT_TAP = 0.27;
@@ -313,7 +313,7 @@ export function MapLabels({
                     style={{
                         position: 'absolute',
                         left: TILE_PADDING,
-                        bottom: TILE_PADDING,
+                        bottom: TILE_PADDING / 2,
                         fontFamily: FONT_FAMILY,
                         fontSize: TYPE.secondary,
                         color: COLORS.subtle

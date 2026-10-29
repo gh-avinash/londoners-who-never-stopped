@@ -160,14 +160,25 @@ const curveY = (v: number) =>
     RIVER_CURVE_BOTTOM -
     (Math.min(v, RIVER_Y_MAX) / RIVER_Y_MAX) * (RIVER_CURVE_BOTTOM - RIVER_CURVE_TOP);
 
-// Moments named on the river. Public, well-documented dates (see FINDINGS.md A29).
-export const RIVER_EVENTS: Array<{ date: string; label: string }> = [
-    { date: '2020-03-23', label: 'Stay at home' },
-    { date: '2020-07-06', label: 'Pubs reopen' },
-    { date: '2020-11-02', label: '2nd lockdown' },
-    { date: '2021-01-04', label: '3rd lockdown' },
-    { date: '2022-05-23', label: 'Elizabeth line' },
-    { date: '2025-09-08', label: 'Tube strike' }
+// Moments named on the river (dates checked, see FINDINGS.md A29). Priority decides which
+// labels win when they don't all fit: 1 = the story's turning points, 3 = nice to have.
+export const RIVER_EVENTS: Array<{ date: string; label: string; priority: 1 | 2 | 3 }> = [
+    { date: '2020-03-23', label: 'Stay at home', priority: 1 },
+    { date: '2020-06-15', label: 'Masks on transport', priority: 3 },
+    { date: '2020-07-04', label: 'Pubs reopen', priority: 2 },
+    { date: '2020-08-03', label: 'Eat Out to Help Out', priority: 3 },
+    { date: '2020-09-22', label: 'Work from home again', priority: 3 },
+    { date: '2020-11-05', label: '2nd lockdown', priority: 1 },
+    { date: '2020-12-20', label: 'London Tier 4', priority: 2 },
+    { date: '2021-01-06', label: '3rd lockdown', priority: 1 },
+    { date: '2021-03-08', label: 'Schools reopen', priority: 3 },
+    { date: '2021-04-12', label: 'Shops reopen', priority: 3 },
+    { date: '2021-05-17', label: 'Indoor dining', priority: 3 },
+    { date: '2021-07-19', label: 'Rules end', priority: 2 },
+    { date: '2021-12-13', label: 'Plan B: WFH', priority: 2 },
+    { date: '2022-05-24', label: 'Elizabeth line', priority: 1 },
+    { date: '2024-03-08', label: 'Off-peak Fridays', priority: 2 },
+    { date: '2025-09-08', label: 'Tube strike', priority: 2 }
 ];
 
 export function RiverLayer({
@@ -321,23 +332,28 @@ export function WallLabel({
 
 const LABEL_CHAR_EM = 0.58;
 const EVENT_LABEL_PAD = 60 + 34;
+const LABEL_GAP = 40;
 
 // Two heights for event labels. Each label is placed where WallLabel will actually draw it
-// (pulled back inside its anchor's screen near an edge) and takes the first height where it
-// clears the label before it, so events close together in time never collide. A label that
-// fits at neither height is left out rather than overlapping.
+// (pulled back inside its anchor's screen near an edge). Labels are placed in priority order,
+// each at the first height where it overlaps nothing already there; a label that fits at
+// neither height is left out rather than overlapping.
 function eventLevels(last: number) {
-    const ends = [-Infinity, -Infinity];
+    const taken: Array<Array<[number, number]>> = [[], []];
     const placed: Array<{ event: (typeof RIVER_EVENTS)[number]; ex: number; level: number }> = [];
-    for (const event of RIVER_EVENTS) {
+    const byPriority = [...RIVER_EVENTS].sort((x, y) => x.priority - y.priority);
+    for (const event of byPriority) {
         const ex = weekToX(weekIndexOf(event.date), last);
         const width = event.label.length * TYPE.secondary * LABEL_CHAR_EM + EVENT_LABEL_PAD;
         const tile = Math.floor(ex / SCREEN_WIDTH) * SCREEN_WIDTH;
         const margin = TILE_PADDING / 2;
         const left = Math.min(Math.max(tile + margin, ex), tile + SCREEN_WIDTH - margin - width);
-        const level = ends.findIndex((end) => end + 40 <= left);
+        const right = left + width;
+        const level = taken.findIndex((spans) =>
+            spans.every(([l, r]) => right + LABEL_GAP <= l || left >= r + LABEL_GAP)
+        );
         if (level === -1) continue;
-        ends[level] = left + width;
+        taken[level].push([left, right]);
         placed.push({ event, ex, level });
     }
     return placed;

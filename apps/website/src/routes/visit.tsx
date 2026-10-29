@@ -7,6 +7,9 @@ import { COLORS, FONT_FAMILY, formatPct } from '../lib/story/layout';
 import type { CardsData, StationCardData } from '../lib/story/types';
 
 const MAX_RESULTS = 8;
+// Every number on the wall, with its assumptions and corrections (the wall points here).
+const METHOD_URL =
+    'https://github.com/gh-avinash/londoners-who-never-stopped/blob/main/analysis/FINDINGS.md';
 
 export const Route = createFileRoute('/visit')({
     component: VisitPage
@@ -71,6 +74,13 @@ function VisitPage() {
             </ul>
 
             {chosen && data && <StationStory station={chosen} data={data} />}
+
+            <p className="mt-8 text-sm" style={{ color: COLORS.subtle }}>
+                Data: TfL open data and ONS Census 2021.{' '}
+                <a href={METHOD_URL} className="underline" style={{ color: COLORS.accent }}>
+                    How these numbers were made
+                </a>
+            </p>
         </main>
     );
 }
