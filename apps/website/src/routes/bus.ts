@@ -1,7 +1,12 @@
+import { createHash, randomInt, timingSafeEqual } from 'node:crypto';
+import { networkInterfaces } from 'node:os';
+
 import { createFileRoute } from '@tanstack/react-router';
 import { defineHooks, type Peer } from 'crossws';
 
 import type {
+    ControlAuthMessage,
+    ControlAuthResultMessage,
     ControlSetMessage,
     LiveStatusMessage,
     ScreenReadyMessage,
@@ -44,6 +49,10 @@ type BusRuntime = {
     lastControlAt: number;
     pickExpiry: Map<string, number>;
     live: LiveStatus | null;
+    password: string;
+    // Connections that unlocked the presenter controls.
+    presenters: Set<Peer>;
+    authFailures: Map<string, { count: number; lockedUntil: number }>;
 };
 
 // Kept on globalThis so dev-server hot reloads reuse one runtime; old timers are cleared below.
@@ -57,7 +66,10 @@ const bus: BusRuntime = (globalWithBus.__doStoryBus ??= {
     liveTimer: null,
     lastControlAt: Date.now(),
     pickExpiry: new Map(),
-    live: null
+    live: null,
+    password: '',
+    presenters: new Set(),
+    authFailures: new Map()
 });
 for (const timer of [bus.playTimer, bus.idleTimer, bus.liveTimer]) {
     if (timer) clearTimeout(timer);
@@ -202,15 +214,112 @@ async function pollLive() {
     }
 }
 
+// This machine's IPv4 address on the local network (Wi-Fi/Ethernet), for the visitor QR code.
+// Skips loopback and self-assigned (169.254.x.x) addresses; null when offline.
+function lanAddress(): string | null {
+    for (const addresses of Object.values(networkInterfaces())) {
+        for (const a of addresses ?? []) {
+            if (a.family === 'IPv4' && !a.internal && !a.address.startsWith('169.254.')) {
+                return a.address;
+            }
+        }
+    }
+    return null;
+}
+
+// ---- presenter password ---------------------------------------------------------------------
+// Only the presenter's tablet needs it: the bus ignores control/set from any connection that
+// hasn't unlocked. Screens and visitor phones (the QR page) never need a password.
+// CONTROL_PASSWORD sets it; otherwise one is generated at start-up and printed in the terminal.
+const MIN_PASSWORD_LENGTH = 4;
+const MAX_PASSWORD_LENGTH = 200;
+const PASSWORD_ALPHABET = 'abcdefghjkmnpqrstuvwxyz23456789';
+const GENERATED_PASSWORD_LENGTH = 8;
+// Brute-force guard: this many wrong attempts from one device locks it out for a minute.
+const MAX_AUTH_FAILURES = 5;
+const AUTH_LOCK_MS = 60_000;
+
+function configuredPassword(): string | null {
+    const value = process.env.CONTROL_PASSWORD?.trim();
+    return value && value.length >= MIN_PASSWORD_LENGTH ? value : null;
+}
+
+function generatePassword() {
+    return Array.from(
+        { length: GENERATED_PASSWORD_LENGTH },
+        () => PASSWORD_ALPHABET[randomInt(PASSWORD_ALPHABET.length)]
+    ).join('');
+}
+
+function digest(value: string) {
+    return createHash('sha256').update(value).digest();
+}
+
+// Constant-time comparison of hashes, so response time leaks nothing about the password.
+function passwordMatches(given: unknown) {
+    if (typeof given !== 'string' || given.length > MAX_PASSWORD_LENGTH) return false;
+    return timingSafeEqual(digest(given.trim()), digest(bus.password));
+}
+
+// Failed attempts are counted per device (network address), so reconnecting doesn't reset them.
+function deviceKey(peer: Peer) {
+    return peer.remoteAddress ?? peer.id;
+}
+
+function handleAuth(peer: Peer, password: unknown) {
+    const key = deviceKey(peer);
+    const now = Date.now();
+    const record = bus.authFailures.get(key);
+    if (record && record.lockedUntil > now) {
+        peer.send({ type: 'control/auth-result', ok: false, locked: true });
+        return;
+    }
+    if (passwordMatches(password)) {
+        bus.authFailures.delete(key);
+        bus.presenters.add(peer);
+        const result: ControlAuthResultMessage = { type: 'control/auth-result', ok: true };
+        peer.send(result);
+        return;
+    }
+    const count = (record && record.lockedUntil > 0 ? 0 : (record?.count ?? 0)) + 1;
+    const locked = count >= MAX_AUTH_FAILURES;
+    bus.authFailures.set(key, { count, lockedUntil: locked ? now + AUTH_LOCK_MS : 0 });
+    const result: ControlAuthResultMessage = { type: 'control/auth-result', ok: false, locked };
+    peer.send(result);
+}
+
+// A runtime created by older code (before a hot reload) may lack these fields.
+bus.presenters ??= new Set();
+bus.authFailures ??= new Map();
+// A password set in the environment always wins; a generated one is kept across hot reloads.
+{
+    const configured = configuredPassword();
+    if (configured) {
+        bus.password = configured;
+    } else if (!bus.password) {
+        bus.password = generatePassword();
+        console.log(
+            `\n  Presenter password for /control: ${bus.password}\n` +
+                '  (set CONTROL_PASSWORD to choose your own)\n'
+        );
+    }
+}
+
 // ---- websocket hooks -----------------------------------------------------------------------
 const hooks = defineHooks({
     open(peer) {
         bus.peers.add(peer);
         // `hello` bootstraps late joiners (e.g. a screen that rebooted) with the current state.
-        peer.send({ type: 'hello', peerId: peer.id, state: bus.state, live: bus.live });
+        peer.send({
+            type: 'hello',
+            peerId: peer.id,
+            state: bus.state,
+            live: bus.live,
+            lanHost: lanAddress()
+        });
         if (!bus.live) void pollLive();
     },
-    message(_peer, message) {
+    message(peer, message) {
         let payload: Record<string, unknown>;
         try {
             const parsed = message.json() as unknown;
@@ -219,7 +328,11 @@ const hooks = defineHooks({
         } catch {
             return;
         }
-        if (payload.type === 'control/set') {
+        if (payload.type === 'control/auth') {
+            handleAuth(peer, (payload as Partial<ControlAuthMessage>).password);
+        } else if (payload.type === 'control/set') {
+            // Presenter controls only work after the password has been accepted.
+            if (!bus.presenters.has(peer)) return;
             applyControl(sanitizeStoryPatch((payload as Partial<ControlSetMessage>).patch));
         } else if (payload.type === 'visitor/pick') {
             const { id } = payload as Partial<VisitorPickMessage>;
@@ -237,6 +350,7 @@ const hooks = defineHooks({
     },
     close(peer) {
         bus.peers.delete(peer);
+        bus.presenters.delete(peer);
     }
 });
 

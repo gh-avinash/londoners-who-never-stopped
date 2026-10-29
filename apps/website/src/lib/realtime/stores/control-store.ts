@@ -6,7 +6,8 @@ import { createInitialEngineStoreState, type ControlStoreState } from '../types'
 const initialState: ControlStoreState = {
     ...createInitialEngineStoreState('control'),
     story: INITIAL_STORY_STATE,
-    isScrubbing: false
+    isScrubbing: false,
+    auth: 'checking'
 };
 
 // Singleton store for all control-route realtime state.

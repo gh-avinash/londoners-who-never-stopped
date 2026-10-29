@@ -23,25 +23,56 @@ pnpm install
 pnpm dev
 ```
 
-Then open:
+Then open these on the same computer (or swap `localhost` for the "Network" address that
+`pnpm dev` prints, to open them from another device):
 
-| Address                              | What it is                                                                                 |
-| ------------------------------------ | ------------------------------------------------------------------------------------------ |
-| http://localhost:5780/wall           | **The whole wall on one monitor**, animated. Best place to start.                          |
-| http://localhost:5780/control        | The presenter's tablet: chapters, guided tour, timeline, what-if switch, station spotlight |
-| http://localhost:5780/screen?c=0&r=0 | One physical screen (column `c` 0–15, row `r` 0–3), as the DO runs it                      |
-| http://localhost:5780/               | The starter's simulator (a few live screens plus the tablet)                               |
-| http://localhost:5780/visit          | The visitor page that the wall's QR code opens on a phone                                  |
+| Address                              | What it is                                                                                       |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------ |
+| http://localhost:5780/wall           | **The whole wall on one monitor**, animated. Best place to start.                                |
+| http://localhost:5780/control        | The presenter's tablet (password-protected): chapters, guided tour, timeline, what-if, spotlight |
+| http://localhost:5780/screen?c=0&r=0 | One physical screen (column `c` 0–15, row `r` 0–3), as the DO runs it                            |
+| http://localhost:5780/               | The starter's simulator (a few live screens plus the tablet)                                     |
+| http://localhost:5780/visit          | The visitor page that the wall's QR code opens on a phone                                        |
 
 Leave it alone for 45 seconds and the wall plays the story by itself, on a loop.
 
-**Phones (QR code).** A phone can't open `localhost`. Start the server with `pnpm dev:lan` and
-open the wall using the "Network" address it prints; the QR code then works for phones on the
-same Wi-Fi. For phones on any network, put the app behind a public address and set
-`VITE_PUBLIC_URL` to it before starting. Note that `/control` has no password yet.
+**Phones (QR code).** `pnpm dev` makes the app reachable from other devices on the same Wi-Fi,
+and the wall's QR code always contains this computer's network address (a phone can't open
+`localhost`), so scanning works for any phone on that Wi-Fi. For phones on any network, put the
+app behind a public address and set `VITE_PUBLIC_URL` to it before starting.
 
 The live panel needs internet access to `api.tfl.gov.uk` (no API key). Everything else runs
 from data in the repo.
+
+## Presenter password
+
+Only the presenter's tablet (`/control`) needs a password. The wall, its screens and the
+visitors' QR page open without one.
+
+**Option A: use the password printed at start-up (nothing to set up).**
+
+1. Run `pnpm dev`. The terminal prints a password, for example:
+    ```
+      Presenter password for /control: k7m2xq9p
+    ```
+2. Open `/control` and enter it. The tablet remembers it until that browser tab is closed.
+
+A new password is generated every time the server starts.
+
+**Option B: set your own password permanently.**
+
+1. Create a file named `.env.local` in `apps/website/` (next to its `package.json`).
+2. Put one line in it (at least 4 characters):
+    ```
+    CONTROL_PASSWORD=your-password
+    ```
+3. Save, then restart `pnpm dev`. The tablet now always uses this password, and nothing is
+   printed at start-up.
+
+`.env.local` is ignored by git, so the password never ends up on GitHub. To go back to a
+generated password, delete the file and restart.
+
+Five wrong attempts lock that device out for a minute.
 
 ## What's on the wall
 

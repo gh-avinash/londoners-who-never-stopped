@@ -13,6 +13,9 @@ export type HelloBusMessage = BusMessage & {
     peerId: string;
     state?: StoryState;
     live?: LiveStatus | null;
+    // The server's address on the local network (e.g. 192.168.0.25), so the wall's QR code
+    // can point phones at it even when the wall itself was opened via localhost.
+    lanHost?: string | null;
 };
 
 // Control -> bus: request a change. The bus validates it, merges it into the canonical state
@@ -39,6 +42,21 @@ export type VisitorPickMessage = BusMessage & {
 export type ScreenReadyMessage = BusMessage & {
     type: 'screen/ready';
     maxWeek: number;
+};
+
+// Control -> bus: unlock this connection's presenter controls. Until it succeeds the bus
+// ignores the connection's control/set messages. Screens and visitor phones never need it.
+export type ControlAuthMessage = BusMessage & {
+    type: 'control/auth';
+    password: string;
+};
+
+// Bus -> that control client only: whether the password was accepted. `locked` = too many
+// wrong attempts from this device; try again in a minute.
+export type ControlAuthResultMessage = BusMessage & {
+    type: 'control/auth-result';
+    ok: boolean;
+    locked?: boolean;
 };
 
 // Bus -> everyone: latest live network snapshot from TfL.
@@ -75,9 +93,14 @@ export type ControlStoreState = EngineStoreState & {
     story: StoryState;
     // True while the operator drags the timeline; remote week echoes are ignored meanwhile.
     isScrubbing: boolean;
+    // Presenter password state: checking = waiting for the bus, needed = ask the presenter.
+    auth: ControlAuthState;
 };
+
+export type ControlAuthState = 'checking' | 'needed' | 'ok' | 'wrong' | 'locked';
 
 export type ScreenStoreState = EngineStoreState & {
     story: StoryState;
     live: LiveStatus | null;
+    lanHost: string | null;
 };
