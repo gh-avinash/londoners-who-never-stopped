@@ -1,0 +1,13 @@
+metric,value
+quintile_low_frontline_share,12.6
+quintile_low_wfh_share,54.5
+quintile_low_retention,5.0
+quintile_high_frontline_share,36.1
+quintile_high_wfh_share,22.6
+quintile_high_retention,11.4
+hospital_above,13
+hospital_n,15
+hospital_median_diff,2.2
+hospital_sign_p,0.0037
+rho_frontline_zone3plus,0.66
+rho_wfh_zone3plus,-0.61

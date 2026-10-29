@@ -1,0 +1,33 @@
+hospital,postcode,lat,lon,postcode_district
+King's College Hospital,SE5 9RS,51.468078,-0.09389,Lambeth
+Northwick Park Hospital,HA1 3UJ,51.575409,-0.322015,Brent
+Royal Free Hospital,NW3 2QG,51.553227,-0.165298,Camden
+King George Hospital,IG3 8YB,51.580546,0.112133,Redbridge
+St George's Hospital,SW17 0QT,51.426682,-0.175694,Wandsworth
+Royal London Hospital,E1 1FR,51.518702,-0.060138,Tower Hamlets
+St Thomas' Hospital,SE1 7EH,51.49796,-0.11888,Lambeth
+Guy's Hospital,SE1 9RT,51.503331,-0.086771,Southwark
+St Mary's Hospital,W2 1NY,51.516971,-0.173545,Westminster
+University College Hospital,NW1 2BU,51.524893,-0.136885,Camden
+Whittington Hospital,N19 5NF,51.566482,-0.139066,Islington
+Homerton University Hospital,E9 6SR,51.550635,-0.046072,Hackney
+Newham University Hospital,E13 8SL,51.522777,0.034744,Newham
+North Middlesex University Hospital,N18 1QX,51.613096,-0.073725,Enfield
+University Hospital Lewisham,SE13 6LH,51.453022,-0.017917,Lewisham
+Queen Elizabeth Hospital Woolwich,SE18 4QH,51.478194,0.050069,Greenwich
+Queen's Hospital Romford,RM7 0AG,51.568649,0.179058,Havering
+Hammersmith Hospital,W12 0HS,51.517422,-0.234698,Hammersmith and Fulham
+Charing Cross Hospital,W6 8RF,51.487046,-0.219912,Hammersmith and Fulham
+Chelsea and Westminster Hospital,SW10 9NH,51.484309,-0.18162,Kensington and Chelsea
+West Middlesex University Hospital,TW7 6AF,51.473648,-0.324413,Hounslow
+Croydon University Hospital,CR7 7YE,51.389128,-0.108758,Croydon
+St Helier Hospital,SM5 1AA,51.380188,-0.183708,Sutton
+Kingston Hospital,KT2 7QB,51.414826,-0.282602,Kingston upon Thames
+Ealing Hospital,UB1 3HW,51.507606,-0.345474,Ealing
+Hillingdon Hospital,UB8 3NN,51.526078,-0.461155,Hillingdon
+Barnet Hospital,EN5 3DJ,51.650646,-0.214622,Barnet
+Whipps Cross Hospital,E11 1NR,51.578833,0.002666,Waltham Forest
+Princess Royal University Hospital,BR6 8ND,51.366244,0.059174,Bromley
+Central Middlesex Hospital,NW10 7NS,51.530938,-0.269138,Brent
+St Bartholomew's Hospital,EC1A 7BE,51.517751,-0.100379,City of London
+Royal Brompton Hospital,SW3 6NP,51.489744,-0.170831,Kensington and Chelsea
