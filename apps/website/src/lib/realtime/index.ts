@@ -6,12 +6,14 @@ export { controlStore } from './stores/control-store';
 export { screenStore } from './stores/screen-store';
 export type {
     BusMessage,
-    BusSharedState,
+    ControlSetMessage,
     EngineConnectionState,
     EngineRole,
     EngineStoreState,
     HelloBusMessage,
-    MapCity,
-    ScreenMapViewMessage,
-    ScreenSegmentSelectionMessage
+    LiveStatusMessage,
+    ScreenReadyMessage,
+    StoryStateMessage,
+    VisitorPickMessage
 } from './types';
+export { visitorEngine, visitorStore } from './engines/visitor-engine';

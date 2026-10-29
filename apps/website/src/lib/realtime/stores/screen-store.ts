@@ -1,9 +1,16 @@
 import { Store, useStore } from '@tanstack/react-store';
 
-import { createInitialScreenStoreState, type ScreenStoreState } from '../types';
+import { INITIAL_STORY_STATE } from '../../story/types';
+import { createInitialEngineStoreState, type ScreenStoreState } from '../types';
+
+const initialState: ScreenStoreState = {
+    ...createInitialEngineStoreState('screen'),
+    story: INITIAL_STORY_STATE,
+    live: null
+};
 
 // Singleton store for all screen-route realtime state.
-export const screenStore = new Store(createInitialScreenStoreState());
+export const screenStore = new Store(initialState);
 
 export function useScreenStore(): ScreenStoreState;
 export function useScreenStore<T>(

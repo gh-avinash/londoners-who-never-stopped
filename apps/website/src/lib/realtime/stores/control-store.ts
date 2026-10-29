@@ -1,9 +1,16 @@
 import { Store, useStore } from '@tanstack/react-store';
 
-import { createInitialControlStoreState, type ControlStoreState } from '../types';
+import { INITIAL_STORY_STATE } from '../../story/types';
+import { createInitialEngineStoreState, type ControlStoreState } from '../types';
+
+const initialState: ControlStoreState = {
+    ...createInitialEngineStoreState('control'),
+    story: INITIAL_STORY_STATE,
+    isScrubbing: false
+};
 
 // Singleton store for all control-route realtime state.
-export const controlStore = new Store(createInitialControlStoreState());
+export const controlStore = new Store(initialState);
 
 export function useControlStore(): ControlStoreState;
 export function useControlStore<T>(

@@ -7,7 +7,8 @@ const RECONNECT_DELAY_MS = 1_500;
 // Shared websocket transport used by both control and screen engines.
 export abstract class BusEngine<TStoreState extends EngineStoreState = EngineStoreState> {
     private socket: WebSocket | null = null;
-    private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+    // Browser timer id (window.setTimeout), not Node's Timeout - engines only run in the browser.
+    private reconnectTimer: number | null = null;
     private readonly role: EngineRole;
     protected readonly store: Store<TStoreState>;
 

@@ -1,6 +1,8 @@
 import {
     ArrowsClockwiseIcon,
     ArrowSquareOutIcon,
+    CaretLeftIcon,
+    CaretRightIcon,
     MoonIcon,
     PlugsConnectedIcon,
     PlugsIcon,
@@ -10,6 +12,7 @@ import { createFileRoute } from '@tanstack/react-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { useTheme } from '../lib/theme-provider';
+import { SIMULATOR_LIVE_COLS, WALL_COLS, WALL_ROWS } from '../lib/wall';
 
 type WallScreen = {
     // Logical wall coordinates.
@@ -27,14 +30,25 @@ function HomePage() {
     const isDark = theme === 'dark';
 
     const wallScreens = useMemo<WallScreen[]>(() => {
-        // Build a 3x2 wall coordinate system.
+        // Build the full wall coordinate system (row-major, matching the CSS grid order).
         // These coordinates map directly to `/screen?c=<col>&r=<row>`.
-        return Array.from({ length: 6 }, (_, index) => {
-            const c = index % 3;
-            const r = Math.floor(index / 3);
+        return Array.from({ length: WALL_COLS * WALL_ROWS }, (_, index) => {
+            const c = index % WALL_COLS;
+            const r = Math.floor(index / WALL_COLS);
             return { c, r, id: `${r}-${c}` };
         });
     }, []);
+
+    // First column of the live window; tiles outside it render as placeholders. "Whole wall"
+    // swaps the grid for the one-page /wall preview, to watch the full canvas animate.
+    const [wholeWall, setWholeWall] = useState(false);
+    const [liveStartCol, setLiveStartCol] = useState(0);
+    const maxLiveStartCol = WALL_COLS - SIMULATOR_LIVE_COLS;
+    const shiftLiveWindow = (delta: number) => {
+        setLiveStartCol((prev) => Math.min(maxLiveStartCol, Math.max(0, prev + delta)));
+    };
+    const isLive = (screen: WallScreen) =>
+        screen.c >= liveStartCol && screen.c < liveStartCol + SIMULATOR_LIVE_COLS;
 
     const [disconnectedById, setDisconnectedById] = useState<Record<string, boolean>>({});
     const [refreshNonceById, setRefreshNonceById] = useState<Record<string, number>>({});
@@ -46,9 +60,8 @@ function HomePage() {
     );
 
     const controlPanels = [
-        // Distinct operator identities simulate simultaneous collaboration.
-        { id: 'a', label: 'Tablet #1', src: '/control?operator=A' },
-        { id: 'b', label: 'Tablet #2', src: '/control?operator=B' }
+        // One presenter tablet; the bus also accepts several at once if the room has more.
+        { id: 'a', label: 'Presenter tablet', src: '/control?operator=A' }
     ];
 
     const toggleDisconnect = (id: string) => {
@@ -117,49 +130,113 @@ function HomePage() {
             <section className="flex min-h-0 flex-col rounded-xl border border-[var(--border)] bg-[var(--muted)] p-3">
                 <div className="mb-2 flex items-center justify-between">
                     <h2 className="text-sm font-medium text-[var(--foreground)]">
-                        Mini-DO (2 x 3) · 1920x1080 per unit
+                        DO wall ({WALL_COLS} x {WALL_ROWS}) · 1920x1080 per unit ·{' '}
+                        {wholeWall
+                            ? 'all columns live'
+                            : `live columns ${liveStartCol}–${liveStartCol + SIMULATOR_LIVE_COLS - 1}`}
                     </h2>
-                    <span className="rounded-full bg-[var(--primary)] px-2 py-1 text-[10px] font-medium text-[var(--primary-foreground)]">
-                        /screen
-                    </span>
+                    <div className="flex items-center gap-1">
+                        <button
+                            type="button"
+                            onClick={() => setWholeWall((prev) => !prev)}
+                            className="cursor-pointer rounded-md border border-[var(--border)] bg-[var(--card)] px-2 py-1 text-[11px] text-[var(--card-foreground)]"
+                            aria-pressed={wholeWall}
+                            title="Preview the whole wall on one page (open /wall for full screen)"
+                        >
+                            {wholeWall ? 'Back to 3 columns' : 'Whole wall'}
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => shiftLiveWindow(-1)}
+                            disabled={wholeWall || liveStartCol === 0}
+                            className="cursor-pointer rounded-md border border-[var(--border)] bg-[var(--card)] p-1 text-[var(--card-foreground)] disabled:cursor-default disabled:opacity-40"
+                            aria-label="Move live window left"
+                            title="Move live window left"
+                        >
+                            <CaretLeftIcon size={14} weight="duotone" />
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => shiftLiveWindow(1)}
+                            disabled={wholeWall || liveStartCol === maxLiveStartCol}
+                            className="cursor-pointer rounded-md border border-[var(--border)] bg-[var(--card)] p-1 text-[var(--card-foreground)] disabled:cursor-default disabled:opacity-40"
+                            aria-label="Move live window right"
+                            title="Move live window right"
+                        >
+                            <CaretRightIcon size={14} weight="duotone" />
+                        </button>
+                        <span className="rounded-full bg-[var(--primary)] px-2 py-1 text-[10px] font-medium text-[var(--primary-foreground)]">
+                            /screen
+                        </span>
+                    </div>
                 </div>
 
                 <div className="bg-back m-auto flex h-fit items-start justify-center overflow-hidden">
-                    <div className="bg-back aspect-[8/3] h-full max-h-full w-full shadow-lg">
+                    <div className="bg-back aspect-[64/9] h-full max-h-full w-full shadow-lg">
                         {/*
                           Simulator wall:
                           - each iframe acts as one physical display node
                           - controls let developers test reconnect/refresh behavior quickly
                           - opening any screen in a new tab simulates standalone deployment
                         */}
-                        <div className="grid h-full w-full grid-cols-3 grid-rows-2 gap-0">
-                            {wallScreens.map((screen) => (
-                                <MiniWallScreen
-                                    key={screen.id}
-                                    c={screen.c}
-                                    r={screen.r}
-                                    src={buildScreenSrc(screen)}
-                                    disconnected={disconnectedById[screen.id] ?? false}
-                                    onToggleDisconnect={() => toggleDisconnect(screen.id)}
-                                    onRefresh={() => refreshFrame(screen.id)}
-                                />
-                            ))}
-                        </div>
+                        {wholeWall ? (
+                            // One page drawing the whole wall with a single map: 64 iframes
+                            // would need 64 WebGL maps, far past the browser's limit.
+                            <iframe
+                                src="/wall"
+                                title="Whole wall preview"
+                                scrolling="no"
+                                className="h-full w-full border-0"
+                            />
+                        ) : (
+                            <div
+                                className="grid h-full w-full gap-0"
+                                style={{
+                                    gridTemplateColumns: `repeat(${WALL_COLS}, minmax(0, 1fr))`,
+                                    gridTemplateRows: `repeat(${WALL_ROWS}, minmax(0, 1fr))`
+                                }}
+                            >
+                                {wallScreens.map((screen) =>
+                                    isLive(screen) ? (
+                                        <MiniWallScreen
+                                            key={screen.id}
+                                            c={screen.c}
+                                            r={screen.r}
+                                            src={buildScreenSrc(screen)}
+                                            disconnected={disconnectedById[screen.id] ?? false}
+                                            onToggleDisconnect={() => toggleDisconnect(screen.id)}
+                                            onRefresh={() => refreshFrame(screen.id)}
+                                        />
+                                    ) : (
+                                        <button
+                                            key={screen.id}
+                                            type="button"
+                                            // Clicking a placeholder jumps the live window to it.
+                                            onClick={() =>
+                                                setLiveStartCol(Math.min(maxLiveStartCol, screen.c))
+                                            }
+                                            className="flex cursor-pointer items-center justify-center border border-black bg-[var(--card)] text-[10px] text-[var(--muted-foreground)]"
+                                            title={`Show column ${screen.c} live`}
+                                        >
+                                            {screen.c},{screen.r}
+                                        </button>
+                                    )
+                                )}
+                            </div>
+                        )}
                     </div>
                 </div>
             </section>
 
             <section className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-3">
                 <div className="mb-2">
-                    <h2 className="text-sm font-medium text-[var(--card-foreground)]">
-                        Operator Panels
-                    </h2>
+                    <h2 className="text-sm font-medium text-[var(--card-foreground)]">Presenter</h2>
                     <p className="text-xs text-[var(--muted-foreground)]">
-                        Separate clients for multi-party control flow.
+                        The presenter&apos;s controls, as they appear on the tablet.
                     </p>
                 </div>
 
-                <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                <div className="grid grid-cols-1 gap-3">
                     {controlPanels.map((panel) => (
                         <article
                             key={panel.id}

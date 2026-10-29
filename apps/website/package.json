@@ -5,6 +5,7 @@
     "type": "module",
     "scripts": {
         "dev": "vp dev",
+        "dev:lan": "vp dev --host",
         "build": "tsc && vp build",
         "preview": "vp preview"
     },
@@ -12,6 +13,7 @@
         "@base-ui/react": "catalog:",
         "@deck.gl/core": "catalog:",
         "@deck.gl/layers": "catalog:",
+        "@deck.gl/mapbox": "catalog:",
         "@deck.gl/react": "catalog:",
         "@phosphor-icons/react": "catalog:",
         "@tanstack/pacer": "catalog:",
@@ -21,6 +23,7 @@
         "@vis.gl/react-maplibre": "catalog:",
         "crossws": "catalog:",
         "maplibre-gl": "catalog:",
+        "qrcode": "catalog:",
         "react": "catalog:",
         "react-dom": "catalog:"
     },
@@ -28,6 +31,7 @@
         "@rolldown/plugin-babel": "catalog:",
         "@tailwindcss/vite": "catalog:",
         "@tanstack/devtools-vite": "catalog:",
+        "@types/qrcode": "catalog:",
         "@types/react": "catalog:",
         "@types/react-dom": "catalog:",
         "@vitejs/plugin-react": "catalog:",

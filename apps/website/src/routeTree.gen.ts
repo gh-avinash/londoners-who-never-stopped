@@ -9,12 +9,24 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as WallRouteImport } from './routes/wall'
+import { Route as VisitRouteImport } from './routes/visit'
 import { Route as ScreenRouteImport } from './routes/screen'
 import { Route as NoopRouteImport } from './routes/noop'
 import { Route as ControlRouteImport } from './routes/control'
 import { Route as BusRouteImport } from './routes/bus'
 import { Route as IndexRouteImport } from './routes/index'
 
+const WallRoute = WallRouteImport.update({
+  id: '/wall',
+  path: '/wall',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VisitRoute = VisitRouteImport.update({
+  id: '/visit',
+  path: '/visit',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ScreenRoute = ScreenRouteImport.update({
   id: '/screen',
   path: '/screen',
@@ -47,6 +59,8 @@ export interface FileRoutesByFullPath {
   '/control': typeof ControlRoute
   '/noop': typeof NoopRoute
   '/screen': typeof ScreenRoute
+  '/visit': typeof VisitRoute
+  '/wall': typeof WallRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -54,6 +68,8 @@ export interface FileRoutesByTo {
   '/control': typeof ControlRoute
   '/noop': typeof NoopRoute
   '/screen': typeof ScreenRoute
+  '/visit': typeof VisitRoute
+  '/wall': typeof WallRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -62,13 +78,30 @@ export interface FileRoutesById {
   '/control': typeof ControlRoute
   '/noop': typeof NoopRoute
   '/screen': typeof ScreenRoute
+  '/visit': typeof VisitRoute
+  '/wall': typeof WallRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/bus' | '/control' | '/noop' | '/screen'
+  fullPaths:
+    | '/'
+    | '/bus'
+    | '/control'
+    | '/noop'
+    | '/screen'
+    | '/visit'
+    | '/wall'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/bus' | '/control' | '/noop' | '/screen'
-  id: '__root__' | '/' | '/bus' | '/control' | '/noop' | '/screen'
+  to: '/' | '/bus' | '/control' | '/noop' | '/screen' | '/visit' | '/wall'
+  id:
+    | '__root__'
+    | '/'
+    | '/bus'
+    | '/control'
+    | '/noop'
+    | '/screen'
+    | '/visit'
+    | '/wall'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -77,10 +110,26 @@ export interface RootRouteChildren {
   ControlRoute: typeof ControlRoute
   NoopRoute: typeof NoopRoute
   ScreenRoute: typeof ScreenRoute
+  VisitRoute: typeof VisitRoute
+  WallRoute: typeof WallRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/wall': {
+      id: '/wall'
+      path: '/wall'
+      fullPath: '/wall'
+      preLoaderRoute: typeof WallRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/visit': {
+      id: '/visit'
+      path: '/visit'
+      fullPath: '/visit'
+      preLoaderRoute: typeof VisitRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/screen': {
       id: '/screen'
       path: '/screen'
@@ -125,6 +174,8 @@ const rootRouteChildren: RootRouteChildren = {
   ControlRoute: ControlRoute,
   NoopRoute: NoopRoute,
   ScreenRoute: ScreenRoute,
+  VisitRoute: VisitRoute,
+  WallRoute: WallRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -1,5 +1,7 @@
+import type { LiveStatus, StoryPatch, StoryState } from '../story/types';
+
 export type BusMessage = {
-    // Keep message kinds namespaced (`control/*`, `screen/*`).
+    // Keep message kinds namespaced (`control/*`, `story/*`).
     type: string;
     peerId?: string;
     peerCount?: number;
@@ -9,49 +11,43 @@ export type BusMessage = {
 export type HelloBusMessage = BusMessage & {
     type: 'hello';
     peerId: string;
-    state?: BusSharedState;
+    state?: StoryState;
+    live?: LiveStatus | null;
 };
 
-export type ControlSliderMessage = BusMessage & {
-    type: 'control/slider';
-    value: number;
+// Control -> bus: request a change. The bus validates it, merges it into the canonical state
+// and answers every peer with `story/state`.
+export type ControlSetMessage = BusMessage & {
+    type: 'control/set';
+    patch: StoryPatch;
 };
 
-export type ScreenSegmentSelectionMessage = BusMessage & {
-    type: 'screen/segment-selection';
-    indexes: number[];
+// Bus -> everyone: the full canonical state (it is tiny, so no deltas needed).
+export type StoryStateMessage = BusMessage & {
+    type: 'story/state';
+    state: StoryState;
 };
 
-export type MapCity = 'london' | 'paris' | 'berlin' | 'madrid' | 'rome' | 'amsterdam';
-
-export type BusSharedState = {
-    city: MapCity;
-    zoom: number;
-    selectedSegmentIndexes: number[];
-};
-
-export type ScreenMapViewState = {
-    longitude: number;
-    latitude: number;
-    zoom: number;
-    bearing: number;
-    pitch: number;
-};
-
-export type ScreenMapViewMessage = BusMessage & {
-    type: 'screen/map-view';
-    view: Partial<ScreenMapViewState>;
-    city?: MapCity;
-};
-
-export type ArcSegment = {
+// Visitor phone -> bus: highlight one station on the wall (visitors cannot steer the story).
+export type VisitorPickMessage = BusMessage & {
+    type: 'visitor/pick';
     id: string;
-    start: [number, number];
-    end: [number, number];
-    weight: number;
 };
 
-export type EngineRole = 'screen' | 'control';
+// Screen -> bus on connect: the dataset's last week index, so the bus can run playback even
+// before any control client has connected (attract mode).
+export type ScreenReadyMessage = BusMessage & {
+    type: 'screen/ready';
+    maxWeek: number;
+};
+
+// Bus -> everyone: latest live network snapshot from TfL.
+export type LiveStatusMessage = BusMessage & {
+    type: 'live/status';
+    live: LiveStatus;
+};
+
+export type EngineRole = 'screen' | 'control' | 'visitor';
 
 export type EngineConnectionState = 'idle' | 'connecting' | 'open' | 'closed' | 'error';
 
@@ -76,37 +72,12 @@ export const createInitialEngineStoreState = (role: EngineRole): EngineStoreStat
 });
 
 export type ControlStoreState = EngineStoreState & {
-    sliderValue: number;
-    isSliderInteracting: boolean;
-    selectedCity: MapCity;
-    selectedSegmentIndexes: number[];
+    story: StoryState;
+    // True while the operator drags the timeline; remote week echoes are ignored meanwhile.
+    isScrubbing: boolean;
 };
 
 export type ScreenStoreState = EngineStoreState & {
-    mapView: ScreenMapViewState;
-    arcSegments: ArcSegment[];
-    selectedSegmentIndexes: number[];
-    isArcSegmentsLoading: boolean;
+    story: StoryState;
+    live: LiveStatus | null;
 };
-
-export const createInitialControlStoreState = (): ControlStoreState => ({
-    ...createInitialEngineStoreState('control'),
-    sliderValue: 25,
-    isSliderInteracting: false,
-    selectedCity: 'london',
-    selectedSegmentIndexes: []
-});
-
-export const createInitialScreenStoreState = (): ScreenStoreState => ({
-    ...createInitialEngineStoreState('screen'),
-    mapView: {
-        longitude: -0.1749,
-        latitude: 51.4988,
-        zoom: 9,
-        bearing: 0,
-        pitch: 0
-    },
-    arcSegments: [],
-    selectedSegmentIndexes: [],
-    isArcSegmentsLoading: false
-});
