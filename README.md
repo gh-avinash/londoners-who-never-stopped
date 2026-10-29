@@ -41,20 +41,38 @@ and the wall's QR code always contains this computer's network address (a phone 
 `localhost`), so scanning works for any phone on that Wi-Fi. For phones on any network, put the
 app behind a public address and set `VITE_PUBLIC_URL` to it before starting.
 
-**Presenter password.** The tablet page (`/control`) asks for a password; the wall's screens
-and the visitors' QR page don't. When the app starts it prints the password in the terminal:
-
-```
-  Presenter password for /control: k7m2xq9p
-```
-
-A new one is generated each time the server starts. To choose your own, create
-`apps/website/.env.local` (never committed) containing `CONTROL_PASSWORD=your-password`. The
-tablet remembers the password until its browser tab is closed. Five wrong attempts lock a
-device out for a minute.
-
 The live panel needs internet access to `api.tfl.gov.uk` (no API key). Everything else runs
 from data in the repo.
+
+## Presenter password
+
+Only the presenter's tablet (`/control`) needs a password. The wall, its screens and the
+visitors' QR page open without one.
+
+**Option A: use the password printed at start-up (nothing to set up).**
+
+1. Run `pnpm dev`. The terminal prints a password, for example:
+    ```
+      Presenter password for /control: k7m2xq9p
+    ```
+2. Open `/control` and enter it. The tablet remembers it until that browser tab is closed.
+
+A new password is generated every time the server starts.
+
+**Option B: set your own password permanently.**
+
+1. Create a file named `.env.local` in `apps/website/` (next to its `package.json`).
+2. Put one line in it (at least 4 characters):
+    ```
+    CONTROL_PASSWORD=your-password
+    ```
+3. Save, then restart `pnpm dev`. The tablet now always uses this password, and nothing is
+   printed at start-up.
+
+`.env.local` is ignored by git, so the password never ends up on GitHub. To go back to a
+generated password, delete the file and restart.
+
+Five wrong attempts lock that device out for a minute.
 
 ## What's on the wall
 
