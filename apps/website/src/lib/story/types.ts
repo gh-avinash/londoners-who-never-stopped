@@ -198,8 +198,10 @@ export type StoryData = {
         intercept: number;
         slope: number;
         r2: number;
-        above: Array<{ name: string; pts: number }>;
-        below: Array<{ name: string; pts: number }>;
+        // Biggest surprises vs the prediction (percentage points), each with an acute hospital
+        // within 800 m if there is one.
+        above: Array<{ name: string; pts: number; hospital: string | null }>;
+        below: Array<{ name: string; pts: number; hospital: string | null }>;
     };
     // Compact indexes so the lightweight control client never loads stations.json.
     weeks: string[];

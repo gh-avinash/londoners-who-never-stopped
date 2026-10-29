@@ -14,6 +14,7 @@ import importlib.util
 import json
 import os
 import sys
+import math
 from collections import defaultdict
 from datetime import date, timedelta
 
@@ -30,6 +31,17 @@ MIN_TOP_LIST_DAILY = 5000  # headline lists use larger stations only (small ones
 # in lockdown), which looks like a service suspension rather than behaviour - unconfirmed.
 MIN_EMPTIED_LIST_DAILY = 20000
 WEEKDAYS = recovery.WEEKDAYS
+
+
+# Same radius as the hospital test in keyworkers.py.
+HOSPITAL_M = 800
+
+
+def metres(lat1, lon1, lat2, lon2):
+    """Approximate distance (equirectangular; accurate to well under 1% across London)."""
+    x = math.radians(lon2 - lon1) * math.cos(math.radians((lat1 + lat2) / 2))
+    y = math.radians(lat2 - lat1)
+    return 6371000 * math.hypot(x, y)
 
 
 def bank_holidays(raw_dir):
@@ -209,10 +221,26 @@ def main(raw_dir, processed_dir, out_dir):
     named = {r["place_id"]: r for r in story_rows}
     big_resid = sorted(((v, named[p]["station"]) for p, v in resid.items()
                         if named[p]["autumn2019_daily"] >= MIN_TOP_LIST_DAILY), reverse=True)
+    # Each surprise also names an acute hospital within HOSPITAL_M, if any: the wall uses it to
+    # explain "busier than predicted" (FINDINGS F11).
+    with open(f"{raw_dir}/hospitals.csv") as f:
+        hospitals = [(h["hospital"], float(h["lat"]), float(h["lon"])) for h in csv.DictReader(f)]
+    by_station = {r["station"]: r for r in story_rows}
+
+    def near_hospital(name):
+        r = by_station[name]
+        lat, lon = float(r["lat"]), float(r["lon"])
+        near = [(metres(lat, lon, hl, ho), h) for h, hl, ho in hospitals]
+        dist, hospital = min(near)
+        return hospital if dist <= HOSPITAL_M else None
+
+    def surprise(v, n):
+        return {"name": n, "pts": round(v, 1), "hospital": near_hospital(n)}
+
     story["whatIf"] = {
         "intercept": round(intercept, 2), "slope": round(slope, 3), "r2": round(r2, 2),
-        "above": [{"name": n, "pts": round(v, 1)} for v, n in big_resid[:4]],
-        "below": [{"name": n, "pts": round(v, 1)} for v, n in big_resid[-4:][::-1]],
+        "above": [surprise(v, n) for v, n in big_resid[:4]],
+        "below": [surprise(v, n) for v, n in big_resid[-4:][::-1]],
     }
 
     # Small per-station summary for visitors' phones (avoids sending the 600 KB weekly series).

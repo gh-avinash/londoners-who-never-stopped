@@ -225,19 +225,23 @@ export function renderTile(c: number, r: number, ctx: TileContext): ReactNode {
     // ---- Maps: legend and close-up heading ----------------------------------------------------
     if (c === LEGEND_TILE.c && r === LEGEND_TILE.r)
         return (
+            // Size = how many taps (entries + exits) a station had that week. Colour = how its
+            // traffic changed from its own 2019 normal, compared with London's change: blue kept
+            // at least twice London's share, grey at most half, white about the same.
             <Tile justify="flex-start" gap={16}>
                 <LegendRow
                     swatch={<Dot size={90} color={COLORS.text} />}
-                    text="bigger = more people"
+                    text="bigger = more taps"
                 />
                 <LegendRow
                     swatch={<Dot size={60} color={COLORS.accent} />}
-                    text="busier than London"
+                    text="kept more than London"
                 />
                 <LegendRow
                     swatch={<Dot size={60} color={COLORS.muted} />}
-                    text="quieter than London"
+                    text="lost more than London"
                 />
+                <Lines size="secondary" color={COLORS.subtle} lines={['vs own 2019 normal']} />
             </Tile>
         );
     if (c === ZOOM_HEAD_COL && r === 0)
@@ -263,9 +267,13 @@ export function renderTile(c: number, r: number, ctx: TileContext): ReactNode {
                         <span key="b" style={{ color: COLORS.accent }}>
                             Barking, lockdown:
                         </span>,
-                        `${roundTo100(barking.lockdownDaily)} people a day —`,
-                        more ? 'more than Liverpool St' : 'vs Liverpool Street',
-                        more ? 'and Bank combined.' : `and Bank: ${roundTo100(combined)}`
+                        // Taps = entries + exits, so a round trip counts twice: not "people".
+                        `${roundTo100(barking.lockdownDaily)} entries + exits`,
+                        more ? 'a day: more than' : 'a day, vs',
+                        'Liverpool St + Bank',
+                        more
+                            ? `combined (${roundTo100(combined)}).`
+                            : `combined: ${roundTo100(combined)}`
                     ]}
                 />
             </Tile>
@@ -340,8 +348,10 @@ export function renderTile(c: number, r: number, ctx: TileContext): ReactNode {
                 <Lines
                     size="secondary"
                     lines={[
-                        'stations shut',
-                        'their doors',
+                        // Detected from the data (under 50 taps a day all spring), not TfL's list:
+                        // most were closed by TfL, a few just near-empty (FINDINGS.md F5).
+                        'stations closed',
+                        'or near-empty',
                         <span key="d" style={{ color: COLORS.subtle }}>
                             (under 50 taps a day)
                         </span>
@@ -508,19 +518,23 @@ export function renderTile(c: number, r: number, ctx: TileContext): ReactNode {
     if (c === WHATIF_COL && r === 2) {
         const [a1, a2] = story.whatIf.above;
         const [b1] = story.whatIf.below;
-        const pts = (v: number) => `${v > 0 ? '+' : '−'}${Math.abs(Math.round(v))}`;
+        // Percentage points above/below the prediction.
+        const pts = (v: number) => `${v > 0 ? '+' : '−'}${Math.abs(Math.round(v))} pts`;
+        // Reasons only where the data shows them: an acute hospital within 800 m, or an airport.
+        const hospitals = [a1, a2].every((a) => a?.hospital);
+        const airport = b1 && /airport|heathrow/i.test(b1.name);
         return (
             <Tile>
                 <Lines
                     size="secondary"
                     lines={[
                         <span key="h" style={{ color: COLORS.accent }}>
-                            Busier than predicted
+                            {hospitals ? 'Busier: near hospitals' : 'Busier than predicted'}
                         </span>,
                         a1 ? `${a1.name} ${pts(a1.pts)}` : '',
                         a2 ? `${a2.name} ${pts(a2.pts)}` : '',
                         <span key="q" style={{ color: COLORS.accent }}>
-                            Quieter: airports
+                            {airport ? 'Quieter: airports' : 'Quieter than predicted'}
                         </span>,
                         b1 ? `${b1.name.replace('Terminal', 'T')} ${pts(b1.pts)}` : ''
                     ]}
@@ -577,9 +591,6 @@ export function renderTile(c: number, r: number, ctx: TileContext): ReactNode {
                         'stop. Use it first.',
                         <span key="d" style={{ color: COLORS.subtle }}>
                             Data: TfL, ONS Census
-                        </span>,
-                        <span key="m" style={{ color: COLORS.subtle }}>
-                            Method: GitHub repo
                         </span>
                     ]}
                 />
