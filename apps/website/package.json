@@ -4,8 +4,7 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "dev": "vp dev",
-        "dev:lan": "vp dev --host",
+        "dev": "vp dev --host",
         "build": "tsc && vp build",
         "preview": "vp preview"
     },

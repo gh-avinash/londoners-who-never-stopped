@@ -23,7 +23,8 @@ pnpm install
 pnpm dev
 ```
 
-Then open:
+Then open these on the same computer (or swap `localhost` for the "Network" address that
+`pnpm dev` prints, to open them from another device):
 
 | Address                              | What it is                                                                                 |
 | ------------------------------------ | ------------------------------------------------------------------------------------------ |
@@ -35,10 +36,13 @@ Then open:
 
 Leave it alone for 45 seconds and the wall plays the story by itself, on a loop.
 
-**Phones (QR code).** A phone can't open `localhost`. Start the server with `pnpm dev:lan` and
-open the wall using the "Network" address it prints; the QR code then works for phones on the
-same Wi-Fi. For phones on any network, put the app behind a public address and set
-`VITE_PUBLIC_URL` to it before starting. Note that `/control` has no password yet.
+**Phones (QR code).** `pnpm dev` makes the app reachable from other devices on the same Wi-Fi,
+and the wall's QR code always contains this computer's network address (a phone can't open
+`localhost`), so scanning works for any phone on that Wi-Fi. For phones on any network, put the
+app behind a public address and set `VITE_PUBLIC_URL` to it before starting.
+
+Because the app is visible on the local network, anyone on that Wi-Fi can open `/control`
+(there is no password yet). On shared or public Wi-Fi, stop the server when you're not using it.
 
 The live panel needs internet access to `api.tfl.gov.uk` (no API key). Everything else runs
 from data in the repo.

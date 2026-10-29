@@ -48,12 +48,20 @@ export class ScreenEngine extends BusEngine<ScreenStoreState> {
         // Same code path as live updates, so a rebooted screen converges identically.
         this.applyState(hello.state);
         this.applyLive(hello.live);
+        this.applyLanHost(hello.lanHost);
         // The socket is open now; (re)send readiness after every reconnect.
         this.sendReady();
     }
 
     private sendReady() {
         if (this.maxWeek !== null) this.send({ type: 'screen/ready', maxWeek: this.maxWeek });
+    }
+
+    private applyLanHost(input: unknown) {
+        // A plain IPv4 address only; anything else is ignored.
+        const lanHost =
+            typeof input === 'string' && /^\d{1,3}(\.\d{1,3}){3}$/.test(input) ? input : null;
+        this.store.setState((prev) => (prev.lanHost === lanHost ? prev : { ...prev, lanHost }));
     }
 
     private applyLive(input: unknown) {

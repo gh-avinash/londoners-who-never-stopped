@@ -25,7 +25,11 @@ export default defineConfig({
             '.tanstack/',
             '.cache',
             '.output',
-            'dist'
+            'dist',
+            // Data written by analysis/scripts and raw downloads: kept exactly as produced, so
+            // re-running the analysis shows no changes.
+            'apps/website/public/data/',
+            'analysis/raw/'
         ]
     }
 });

@@ -1,3 +1,5 @@
+import { networkInterfaces } from 'node:os';
+
 import { createFileRoute } from '@tanstack/react-router';
 import { defineHooks, type Peer } from 'crossws';
 
@@ -202,12 +204,31 @@ async function pollLive() {
     }
 }
 
+// This machine's IPv4 address on the local network (Wi-Fi/Ethernet), for the visitor QR code.
+// Skips loopback and self-assigned (169.254.x.x) addresses; null when offline.
+function lanAddress(): string | null {
+    for (const addresses of Object.values(networkInterfaces())) {
+        for (const a of addresses ?? []) {
+            if (a.family === 'IPv4' && !a.internal && !a.address.startsWith('169.254.')) {
+                return a.address;
+            }
+        }
+    }
+    return null;
+}
+
 // ---- websocket hooks -----------------------------------------------------------------------
 const hooks = defineHooks({
     open(peer) {
         bus.peers.add(peer);
         // `hello` bootstraps late joiners (e.g. a screen that rebooted) with the current state.
-        peer.send({ type: 'hello', peerId: peer.id, state: bus.state, live: bus.live });
+        peer.send({
+            type: 'hello',
+            peerId: peer.id,
+            state: bus.state,
+            live: bus.live,
+            lanHost: lanAddress()
+        });
         if (!bus.live) void pollLive();
     },
     message(_peer, message) {

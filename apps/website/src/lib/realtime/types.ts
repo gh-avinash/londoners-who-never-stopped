@@ -13,6 +13,9 @@ export type HelloBusMessage = BusMessage & {
     peerId: string;
     state?: StoryState;
     live?: LiveStatus | null;
+    // The server's address on the local network (e.g. 192.168.0.25), so the wall's QR code
+    // can point phones at it even when the wall itself was opened via localhost.
+    lanHost?: string | null;
 };
 
 // Control -> bus: request a change. The bus validates it, merges it into the canonical state
@@ -80,4 +83,5 @@ export type ControlStoreState = EngineStoreState & {
 export type ScreenStoreState = EngineStoreState & {
     story: StoryState;
     live: LiveStatus | null;
+    lanHost: string | null;
 };

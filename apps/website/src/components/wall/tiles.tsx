@@ -1,6 +1,7 @@
 import QRCode from 'qrcode';
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 
+import { useScreenStore } from '../../lib/realtime/stores/screen-store';
 import {
     COLORS,
     FONT_FAMILY,
@@ -666,32 +667,35 @@ const QR_SIZE = 560;
 function VisitorQr() {
     const [url, setUrl] = useState<string | null>(null);
     const [isLocal, setIsLocal] = useState(false);
-    // VITE_PUBLIC_URL (e.g. a public tunnel or hosted address) lets phones on any network reach
-    // /visit while the screens themselves use a local address. Otherwise: the wall's own address.
+    const lanHost = useScreenStore((state) => state.lanHost);
+    // Where phones should go, in order: VITE_PUBLIC_URL (a public address, for phones on any
+    // network); the server's own network address when the wall was opened via localhost (a
+    // phone can't open "localhost" - that means the phone itself); else the wall's own address.
     useEffect(() => {
         const configured: unknown = import.meta.env.VITE_PUBLIC_URL;
         const publicUrl =
             typeof configured === 'string' && /^https?:\/\/[^\s]+$/.test(configured)
                 ? configured.replace(/\/+$/, '')
                 : null;
-        setUrl(`${publicUrl ?? window.location.origin}/visit`);
-        setIsLocal(
-            !publicUrl && ['localhost', '127.0.0.1', '[::1]'].includes(window.location.hostname)
-        );
-    }, []);
+        const { protocol, hostname, port, origin } = window.location;
+        const local = ['localhost', '127.0.0.1', '[::1]'].includes(hostname);
+        const lanUrl = local && lanHost ? `${protocol}//${lanHost}${port ? `:${port}` : ''}` : null;
+        setUrl(`${publicUrl ?? lanUrl ?? origin}/visit`);
+        setIsLocal(!publicUrl && local && !lanHost);
+    }, [lanHost]);
     const modules = useMemo(
         () => (url ? QRCode.create(url, { errorCorrectionLevel: 'M' }).modules : null),
         [url]
     );
-    // A phone can't open "localhost" (that means the phone itself), so a code for it would be
-    // dead. Say how to fix it instead: open the wall via the network address (pnpm dev:lan).
+    // No address a phone could open (offline, or the server didn't report one): say so rather
+    // than show a dead code.
     if (isLocal)
         return (
             <Tile justify="flex-start">
                 <Lines
                     size="secondary"
                     color={COLORS.subtle}
-                    lines={['Visitor QR is off:', 'open the wall via', 'its network address']}
+                    lines={['Visitor QR is off:', 'no network address', 'for phones found']}
                 />
             </Tile>
         );
@@ -699,6 +703,8 @@ function VisitorQr() {
         <Tile justify="flex-start">
             <div style={{ display: 'flex', gap: 60, alignItems: 'center' }}>
                 <div
+                    // The encoded address, readable in the page for testing.
+                    data-visit-url={url ?? undefined}
                     style={{
                         width: QR_SIZE,
                         height: QR_SIZE,

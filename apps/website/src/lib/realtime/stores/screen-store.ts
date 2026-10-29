@@ -6,7 +6,8 @@ import { createInitialEngineStoreState, type ScreenStoreState } from '../types';
 const initialState: ScreenStoreState = {
     ...createInitialEngineStoreState('screen'),
     story: INITIAL_STORY_STATE,
-    live: null
+    live: null,
+    lanHost: null
 };
 
 // Singleton store for all screen-route realtime state.
