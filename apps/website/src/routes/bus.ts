@@ -1,5 +1,4 @@
 import { createHash, randomInt, timingSafeEqual } from 'node:crypto';
-import { networkInterfaces } from 'node:os';
 
 import { createFileRoute } from '@tanstack/react-router';
 import { defineHooks, type Peer } from 'crossws';
@@ -214,22 +213,9 @@ async function pollLive() {
     }
 }
 
-// This machine's IPv4 address on the local network (Wi-Fi/Ethernet), for the visitor QR code.
-// Skips loopback and self-assigned (169.254.x.x) addresses; null when offline.
-function lanAddress(): string | null {
-    for (const addresses of Object.values(networkInterfaces())) {
-        for (const a of addresses ?? []) {
-            if (a.family === 'IPv4' && !a.internal && !a.address.startsWith('169.254.')) {
-                return a.address;
-            }
-        }
-    }
-    return null;
-}
-
 // ---- presenter password ---------------------------------------------------------------------
 // Only the presenter's tablet needs it: the bus ignores control/set from any connection that
-// hasn't unlocked. Screens and visitor phones (the QR page) never need a password.
+// hasn't unlocked. Screens and visitors' phones (/visit) never need a password.
 // CONTROL_PASSWORD sets it; otherwise one is generated at start-up and printed in the terminal.
 const MIN_PASSWORD_LENGTH = 4;
 const MAX_PASSWORD_LENGTH = 200;
@@ -314,8 +300,7 @@ const hooks = defineHooks({
             type: 'hello',
             peerId: peer.id,
             state: bus.state,
-            live: bus.live,
-            lanHost: lanAddress()
+            live: bus.live
         });
         if (!bus.live) void pollLive();
     },

@@ -174,6 +174,8 @@ export type StoryData = {
     stationsClosed: number;
     normalDailyTaps: number;
     stationCount: number;
+    // Every entry + exit tap in the data, Jan 2019 to dataEnd.
+    totalTaps: number;
     keptMoving: RankedStation[];
     emptied: RankedStation[];
     compare: Record<string, { pct: number; lockdownDaily: number }>;

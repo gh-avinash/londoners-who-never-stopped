@@ -23,8 +23,26 @@ pnpm install
 pnpm dev
 ```
 
-Then open these on the same computer (or swap `localhost` for the "Network" address that
-`pnpm dev` prints, to open them from another device):
+`pnpm dev` prints two addresses: **Network** and **Local**.
+
+**Network address: from any device on the same network** (a tablet as the presenter's remote, a
+phone, another computer). Replace `<network-address>` with the "Network" address `pnpm dev`
+prints, which is this computer's address on its current network and changes from network to
+network:
+
+| Address                                      | What it is                                                                                       |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| http://<network-address>:5780/wall           | **The whole wall on one monitor**, animated. Best place to start.                                |
+| http://<network-address>:5780/control        | The presenter's tablet (password-protected): chapters, guided tour, timeline, what-if, spotlight |
+| http://<network-address>:5780/screen?c=0&r=0 | One physical screen (column `c` 0–15, row `r` 0–3), as the DO runs it                            |
+| http://<network-address>:5780/               | The starter's simulator (a few live screens plus the tablet)                                     |
+| http://<network-address>:5780/visit          | Optional phone page: a visitor finds their station and it lights up on the wall                  |
+
+University and office Wi-Fi (e.g. eduroam) often blocks devices from reaching each other; if
+the Network address doesn't open on another device, use a phone hotspot or a network where it
+does.
+
+**Local address: on the computer running the app only** (works on any network, or none):
 
 | Address                              | What it is                                                                                       |
 | ------------------------------------ | ------------------------------------------------------------------------------------------------ |
@@ -32,22 +50,29 @@ Then open these on the same computer (or swap `localhost` for the "Network" addr
 | http://localhost:5780/control        | The presenter's tablet (password-protected): chapters, guided tour, timeline, what-if, spotlight |
 | http://localhost:5780/screen?c=0&r=0 | One physical screen (column `c` 0–15, row `r` 0–3), as the DO runs it                            |
 | http://localhost:5780/               | The starter's simulator (a few live screens plus the tablet)                                     |
-| http://localhost:5780/visit          | The visitor page that the wall's QR code opens on a phone                                        |
+| http://localhost:5780/visit          | Optional phone page: a visitor finds their station and it lights up on the wall                  |
 
 Leave it alone for 45 seconds and the wall plays the story by itself, on a loop.
-
-**Phones (QR code).** `pnpm dev` makes the app reachable from other devices on the same Wi-Fi,
-and the wall's QR code always contains this computer's network address (a phone can't open
-`localhost`), so scanning works for any phone on that Wi-Fi. For phones on any network, put the
-app behind a public address and set `VITE_PUBLIC_URL` to it before starting.
 
 The live panel needs internet access to `api.tfl.gov.uk` (no API key). Everything else runs
 from data in the repo.
 
+## Stopping the app
+
+In the terminal where `pnpm dev` is running, press **Ctrl + C**. The wall, tablet and phone
+pages stop working until you run `pnpm dev` again.
+
+If that terminal is already closed, or `pnpm dev` says port 5780 is in use, stop whatever is
+still running on that port (macOS/Linux):
+
+```bash
+lsof -ti tcp:5780 | xargs kill
+```
+
 ## Presenter password
 
 Only the presenter's tablet (`/control`) needs a password. The wall, its screens and the
-visitors' QR page open without one.
+`/visit` phone page open without one.
 
 **Option A: use the password printed at start-up (nothing to set up).**
 
@@ -78,8 +103,8 @@ Five wrong attempts lock that device out for a minute.
 
 | Columns | Content                                                                                   |
 | ------- | ----------------------------------------------------------------------------------------- |
-| 1–2     | Title, 2019 baseline, QR code                                                             |
-| 3–6     | All of London: 407 stations, sized by people, coloured by busy vs London                  |
+| 1–2     | Title, 2019 baseline, the dataset at a glance                                             |
+| 3–6     | All of London: 407 stations, sized by taps, coloured by how well each held up vs London   |
 | 7–9     | East London close-up: 8 of the 10 stations that kept the highest share of riders are here |
 | 10–12   | Lockdown: 5.8%, closures, who kept moving and who emptied, the census and hospital tests  |
 | 13      | Six years on: 80%, centre vs outer by weekday, the Elizabeth line                         |
