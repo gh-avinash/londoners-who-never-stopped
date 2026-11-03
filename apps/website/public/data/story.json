@@ -2320,6 +2320,7 @@
     }
   ],
   "elizabethLinePct": 120.8,
+  "totalTaps": 18761367340,
   "whatIf": {
     "intercept": 2.31,
     "slope": 0.257,

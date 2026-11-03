@@ -217,6 +217,10 @@ def main(raw_dir, processed_dir, out_dir):
                                      "recovery_2026_pct"),
     }
 
+    # Size of the dataset, for the wall's "The data" panel: every entry + exit tap at the stations
+    # on the wall, Jan 2019 to the end of the data (overlapping files counted once).
+    story["totalTaps"] = sum(taps.values())
+
     # Surprises are listed for larger stations only (small ones are noisy, see A5).
     named = {r["place_id"]: r for r in story_rows}
     big_resid = sorted(((v, named[p]["station"]) for p, v in resid.items()

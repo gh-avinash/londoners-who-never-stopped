@@ -168,9 +168,7 @@ function ControlPage() {
                 </section>
 
                 <section className="flex flex-col gap-2 rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-2">
-                    <p className="text-xs text-[var(--muted-foreground)]">
-                        Highlight a station (visitors can also pick theirs by scanning the QR code)
-                    </p>
+                    <p className="text-xs text-[var(--muted-foreground)]">Highlight a station</p>
                     <div className="grid grid-cols-3 gap-2">
                         {SPOTLIGHT_STATIONS.filter((name) => nameToId.has(name)).map((name) => {
                             const id = nameToId.get(name) ?? null;

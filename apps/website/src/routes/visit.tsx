@@ -15,7 +15,7 @@ export const Route = createFileRoute('/visit')({
     component: VisitPage
 });
 
-// `/visit` opens on a visitor's phone from the QR code on the wall. They find their station; it
+// `/visit` is an optional phone page (open <network-address>/visit). Visitors find their station; it
 // lights up on the wall (via the bus) and its story appears on their phone - a personal
 // drill-down that doesn't take the wall away from the presenter.
 function VisitPage() {
