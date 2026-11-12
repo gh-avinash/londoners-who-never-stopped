@@ -41,7 +41,8 @@ function HomePage() {
 
     // First column of the live window; tiles outside it render as placeholders. "Whole wall"
     // swaps the grid for the one-page /wall preview, to watch the full canvas animate.
-    const [wholeWall, setWholeWall] = useState(false);
+    // Opens on the whole wall: the first thing a reviewer should see.
+    const [wholeWall, setWholeWall] = useState(true);
     const [liveStartCol, setLiveStartCol] = useState(0);
     const maxLiveStartCol = WALL_COLS - SIMULATOR_LIVE_COLS;
     const shiftLiveWindow = (delta: number) => {
@@ -171,7 +172,7 @@ function HomePage() {
                     </div>
                 </div>
 
-                <div className="bg-back m-auto flex h-fit items-start justify-center overflow-hidden">
+                <div className="bg-back m-auto flex h-fit w-full items-start justify-center overflow-hidden">
                     <div className="bg-back aspect-[64/9] h-full max-h-full w-full shadow-lg">
                         {/*
                           Simulator wall:
@@ -186,7 +187,8 @@ function HomePage() {
                                 src="/wall"
                                 title="Whole wall preview"
                                 scrolling="no"
-                                className="h-full w-full border-0"
+                                // Explicit 16 x 4 shape: the parent is sized by its content.
+                                className="block aspect-[64/9] w-full border-0"
                             />
                         ) : (
                             <div

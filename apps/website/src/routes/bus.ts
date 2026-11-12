@@ -1,4 +1,4 @@
-import { createHash, randomInt, timingSafeEqual } from 'node:crypto';
+import { createHash, timingSafeEqual } from 'node:crypto';
 
 import { createFileRoute } from '@tanstack/react-router';
 import { defineHooks, type Peer } from 'crossws';
@@ -216,11 +216,11 @@ async function pollLive() {
 // ---- presenter password ---------------------------------------------------------------------
 // Only the presenter's tablet needs it: the bus ignores control/set from any connection that
 // hasn't unlocked. Screens and visitors' phones (/visit) never need a password.
-// CONTROL_PASSWORD sets it; otherwise one is generated at start-up and printed in the terminal.
+// CONTROL_PASSWORD (apps/website/.env) sets it. Without it the built-in default applies, so the
+// tablet always works out of the box with the password given in the README.
+const DEFAULT_PASSWORD = 'observatory';
 const MIN_PASSWORD_LENGTH = 4;
 const MAX_PASSWORD_LENGTH = 200;
-const PASSWORD_ALPHABET = 'abcdefghjkmnpqrstuvwxyz23456789';
-const GENERATED_PASSWORD_LENGTH = 8;
 // Brute-force guard: this many wrong attempts from one device locks it out for a minute.
 const MAX_AUTH_FAILURES = 5;
 const AUTH_LOCK_MS = 60_000;
@@ -228,13 +228,6 @@ const AUTH_LOCK_MS = 60_000;
 function configuredPassword(): string | null {
     const value = process.env.CONTROL_PASSWORD?.trim();
     return value && value.length >= MIN_PASSWORD_LENGTH ? value : null;
-}
-
-function generatePassword() {
-    return Array.from(
-        { length: GENERATED_PASSWORD_LENGTH },
-        () => PASSWORD_ALPHABET[randomInt(PASSWORD_ALPHABET.length)]
-    ).join('');
 }
 
 function digest(value: string) {
@@ -277,17 +270,12 @@ function handleAuth(peer: Peer, password: unknown) {
 // A runtime created by older code (before a hot reload) may lack these fields.
 bus.presenters ??= new Set();
 bus.authFailures ??= new Map();
-// A password set in the environment always wins; a generated one is kept across hot reloads.
+// Printed once per start.
 {
-    const configured = configuredPassword();
-    if (configured) {
-        bus.password = configured;
-    } else if (!bus.password) {
-        bus.password = generatePassword();
-        console.log(
-            `\n  Presenter password for /control: ${bus.password}\n` +
-                '  (set CONTROL_PASSWORD to choose your own)\n'
-        );
+    const password = configuredPassword() ?? DEFAULT_PASSWORD;
+    if (bus.password !== password) {
+        bus.password = password;
+        console.log(`\n  Presenter password for /control: ${password}\n`);
     }
 }
 
