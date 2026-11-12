@@ -227,8 +227,8 @@ function PasswordGate({ auth }: { auth: string }) {
             >
                 <h1 className="text-sm font-semibold">The Londoners who never stopped</h1>
                 <p className="text-xs text-[var(--muted-foreground)]">
-                    Presenter controls. Enter the password shown in the terminal where the app is
-                    running (or the one set with CONTROL_PASSWORD).
+                    Presenter controls. Enter the presenter password: it&apos;s in the README and in
+                    the terminal where the app is running.
                 </p>
                 <input
                     type="password"

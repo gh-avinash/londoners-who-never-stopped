@@ -11,6 +11,29 @@ them. Six years on, travel has settled at 80% of 2019, lowest in the centre and 
 By Avinash Kotagi (Imperial MBA 2026–27), for the Imperial Data Science Institute's Data for
 Humanity Internship. Built on [dsi-icl/do-starter-playground](https://github.com/dsi-icl/do-starter-playground).
 
+## Quick tour (5 minutes)
+
+1. Start the app (details in [Run it](#run-it)): `pnpm install`, then `pnpm dev`. It prints a
+   **Network** address, e.g. `http://192.168.1.10:5780`.
+2. Open `http://<network-address>:5780/wall` in one browser window: the whole 16 × 4 wall,
+   scaled to your screen.
+3. Open `http://<network-address>:5780/control` beside it, or on a tablet or phone on the same
+   Wi-Fi: the presenter's tablet. Password: **`observatory`**.
+4. On the tablet, try these and watch the wall respond:
+    - **▶ Guided tour**: the playhead sweeps 2019 → 2026 along the bottom row and the spotlight
+      follows the story.
+    - **2 · Lockdown**: the wall jumps to the deepest lockdown week (20 Apr 2020, 5.8% of normal)
+      and the lockdown columns light up.
+    - **Barking** (station buttons): a ring marks it on both maps, with its numbers beside them.
+    - **What if?**, then **Prediction** and **Reality**: the dots glide between real lockdown
+      travel and a prediction made only from neighbours' jobs.
+    - **3 · Six years on**, then **So what?**
+5. Leave the tablet alone for 45 seconds: the wall plays the story by itself, on a loop.
+
+`http://<network-address>:5780/` shows the wall and the tablet together on one page. On the
+computer running the app, `localhost` works in place of the Network address (see the tables
+below).
+
 ## Run it
 
 Needs [Node.js](https://nodejs.org) 22.12 or newer. pnpm comes with Node via Corepack.
@@ -30,13 +53,13 @@ phone, another computer). Replace `<network-address>` with the "Network" address
 prints, which is this computer's address on its current network and changes from network to
 network:
 
-| Address                                      | What it is                                                                                       |
-| -------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| http://<network-address>:5780/wall           | **The whole wall on one monitor**, animated. Best place to start.                                |
-| http://<network-address>:5780/control        | The presenter's tablet (password-protected): chapters, guided tour, timeline, what-if, spotlight |
-| http://<network-address>:5780/screen?c=0&r=0 | One physical screen (column `c` 0–15, row `r` 0–3), as the DO runs it                            |
-| http://<network-address>:5780/               | The starter's simulator (a few live screens plus the tablet)                                     |
-| http://<network-address>:5780/visit          | Optional phone page: a visitor finds their station and it lights up on the wall                  |
+| Address                                        | What it is                                                                                       |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `http://<network-address>:5780/wall`           | **The whole wall on one monitor**, animated. Best place to start.                                |
+| `http://<network-address>:5780/control`        | The presenter's tablet (password-protected): chapters, guided tour, timeline, what-if, spotlight |
+| `http://<network-address>:5780/screen?c=0&r=0` | One physical screen (column `c` 0–15, row `r` 0–3), as the DO runs it                            |
+| `http://<network-address>:5780/`               | The wall and the tablet together on one page (the starter's simulator)                           |
+| `http://<network-address>:5780/visit`          | Optional phone page: a visitor finds their station and it lights up on the wall                  |
 
 University and office Wi-Fi (e.g. eduroam) often blocks devices from reaching each other; if
 the Network address doesn't open on another device, use a phone hotspot or a network where it
@@ -49,7 +72,7 @@ does.
 | http://localhost:5780/wall           | **The whole wall on one monitor**, animated. Best place to start.                                |
 | http://localhost:5780/control        | The presenter's tablet (password-protected): chapters, guided tour, timeline, what-if, spotlight |
 | http://localhost:5780/screen?c=0&r=0 | One physical screen (column `c` 0–15, row `r` 0–3), as the DO runs it                            |
-| http://localhost:5780/               | The starter's simulator (a few live screens plus the tablet)                                     |
+| http://localhost:5780/               | The wall and the tablet together on one page (the starter's simulator)                           |
 | http://localhost:5780/visit          | Optional phone page: a visitor finds their station and it lights up on the wall                  |
 
 Leave it alone for 45 seconds and the wall plays the story by itself, on a loop.
@@ -74,28 +97,17 @@ lsof -ti tcp:5780 | xargs kill
 Only the presenter's tablet (`/control`) needs a password. The wall, its screens and the
 `/visit` phone page open without one.
 
-**Option A: use the password printed at start-up (nothing to set up).**
+**Default: `observatory`**, set in [`apps/website/.env`](apps/website/.env):
 
-1. Run `pnpm dev`. The terminal prints a password, for example:
-    ```
-      Presenter password for /control: k7m2xq9p
-    ```
-2. Open `/control` and enter it. The tablet remembers it until that browser tab is closed.
+```
+CONTROL_PASSWORD=observatory
+```
 
-A new password is generated every time the server starts.
+The terminal also prints it when `pnpm dev` starts. The tablet remembers it until that browser
+tab is closed.
 
-**Option B: set your own password permanently.**
-
-1. Create a file named `.env.local` in `apps/website/` (next to its `package.json`).
-2. Put one line in it (at least 4 characters):
-    ```
-    CONTROL_PASSWORD=your-password
-    ```
-3. Save, then restart `pnpm dev`. The tablet now always uses this password, and nothing is
-   printed at start-up.
-
-`.env.local` is ignored by git, so the password never ends up on GitHub. To go back to a
-generated password, delete the file and restart.
+**To change it:** edit that line in `apps/website/.env` and restart `pnpm dev`. If the file or
+the line is missing, the built-in default `observatory` applies.
 
 Five wrong attempts lock that device out for a minute.
 
