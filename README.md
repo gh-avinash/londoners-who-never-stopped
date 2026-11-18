@@ -8,6 +8,12 @@ Stations whose neighbours work frontline jobs (carers, drivers, cleaners) kept 2
 of work-from-home areas, and 13 of 15 hospital stations stayed busier than the stations around
 them. Six years on, travel has settled at 80% of 2019, lowest in the centre and on Fridays.
 
+![The whole 16 × 4 wall at the deepest lockdown week (20 April 2020), with Barking spotlighted from the presenter's tablet](docs/wall-lockdown.png)
+
+_The whole wall at the deepest lockdown week (20 April 2020), with Barking spotlighted from the
+presenter's tablet. Left to right: title, all of London, an East London close-up, the lockdown
+findings, six years on, what if?, live TfL status, so what; the timeline runs along the bottom._
+
 By Avinash Kotagi (Imperial MBA 2026–27), for the Imperial Data Science Institute's Data for
 Humanity Internship. Built on [dsi-icl/do-starter-playground](https://github.com/dsi-icl/do-starter-playground).
 

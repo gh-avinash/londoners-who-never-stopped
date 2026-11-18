@@ -2,7 +2,7 @@ import { createFileRoute, useLocation } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
 
 import { ScreenLayers } from '../components/wall/screen-layers';
-import { StoryMap } from '../components/wall/story-map';
+import { StoryMap, surprisesOf } from '../components/wall/story-map';
 import { Lines, Tile } from '../components/wall/text';
 import { screenEngine } from '../lib/realtime/engines/screen-engine';
 import { useScreenStore } from '../lib/realtime/stores/screen-store';
@@ -80,6 +80,7 @@ function ScreenPage() {
                             selected={story.selected}
                             picks={story.picks}
                             whatIf={story.whatIf}
+                            surprises={surprisesOf(data.story)}
                             lockdownWeek={DEEPEST_LOCKDOWN_WEEK}
                             lockdownNetworkPct={data.story.networkLockdownPct}
                         />
