@@ -21,11 +21,12 @@ export const Route = createRootRouteWithContext()({
                 content: 'width=device-width, initial-scale=1'
             },
             {
-                title: 'DO app'
+                title: 'The Londoners who never stopped'
             },
             {
                 name: 'description',
-                content: 'A minimal DO app starter'
+                content:
+                    'Who kept London moving in the 2020 lockdown, and who came back: a Data Observatory demo on TfL open data'
             }
         ],
         links: [

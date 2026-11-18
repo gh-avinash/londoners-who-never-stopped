@@ -2,7 +2,7 @@ import { MAP_FIRST_COL, isSpotlit, sectionOfColumn } from '../../lib/story/layou
 import { DEEPEST_LOCKDOWN_WEEK } from '../../lib/story/timeline';
 import type { LiveStatus, StationsData, StoryData, StoryState } from '../../lib/story/types';
 import { SCREEN_HEIGHT, SCREEN_WIDTH } from '../../lib/wall';
-import { MapLabels } from './story-map';
+import { MapLabels, surprisesOf } from './story-map';
 import { StationCard, renderTile } from './tiles';
 import { BackdropLayer, RiverLabels, RiverLayer } from './wall-graphics';
 
@@ -36,6 +36,7 @@ export function ScreenLayers({
     const week = Math.min(story.week, lastWeek);
     const networkPct = data.stations.network[week] ?? 0;
     const lit = isSpotlit(sectionOfColumn(c), story);
+    const surprises = surprisesOf(data.story);
     const selected = data.stations.stations.find((s) => s.id === story.selected) ?? null;
 
     return (
@@ -75,6 +76,7 @@ export function ScreenLayers({
                 selected={story.selected}
                 picks={story.picks}
                 whatIf={story.whatIf}
+                surprises={surprises}
                 lockdownWeek={DEEPEST_LOCKDOWN_WEEK}
             />
             <RiverLayer c={c} r={r} network={data.stations.network} week={week} />

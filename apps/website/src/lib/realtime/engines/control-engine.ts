@@ -1,5 +1,6 @@
 import { throttle } from '@tanstack/pacer';
 
+import { DEEPEST_LOCKDOWN_WEEK } from '../../story/timeline';
 import { sanitizeStoryState, type Focus, type StoryPatch } from '../../story/types';
 import { controlStore } from '../stores/control-store';
 import type {
@@ -26,7 +27,13 @@ export class ControlEngine extends BusEngine<ControlStoreState> {
     );
 
     private readonly sendWhatIfThrottled = throttle(
-        (whatIf: number) => this.sendPatch({ whatIf, focus: 'whatif', playing: false }),
+        (whatIf: number) =>
+            this.sendPatch({
+                whatIf,
+                focus: 'whatif',
+                playing: false,
+                week: DEEPEST_LOCKDOWN_WEEK
+            }),
         { wait: SCRUB_BROADCAST_WAIT_MS, leading: true, trailing: true }
     );
 
@@ -93,11 +100,18 @@ export class ControlEngine extends BusEngine<ControlStoreState> {
         this.sendWeekThrottled(week);
     }
 
-    // What-if simulator: 0 = what really happened, 100 = the jobs-only model.
+    // What-if view: 0 = what really happened, 100 = the prediction from neighbours' jobs. Both
+    // are shown at the deepest lockdown week, so reality and prediction compare like with like.
     setWhatIf(whatIf: number) {
         this.store.setState((prev) => ({
             ...prev,
-            story: { ...prev.story, whatIf, focus: 'whatif', playing: false }
+            story: {
+                ...prev.story,
+                whatIf,
+                focus: 'whatif',
+                playing: false,
+                week: DEEPEST_LOCKDOWN_WEEK
+            }
         }));
         this.sendWhatIfThrottled(whatIf);
     }

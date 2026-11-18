@@ -9,6 +9,7 @@ import {
     FONT_FAMILY,
     ZOOM_FIRST_COL,
     MUTED_RGB,
+    RIVER_ROW,
     TILE_PADDING,
     TYPE,
     dotScaleFor,
@@ -16,7 +17,7 @@ import {
     projectToTile,
     type TileView
 } from '../../lib/story/layout';
-import type { Station } from '../../lib/story/types';
+import type { Station, StoryData } from '../../lib/story/types';
 import { SCREEN_HEIGHT, SCREEN_WIDTH } from '../../lib/wall';
 
 import 'maplibre-gl/dist/maplibre-gl.css';
@@ -128,6 +129,7 @@ export function StoryMap({
     selected,
     picks,
     whatIf,
+    surprises,
     lockdownWeek,
     lockdownNetworkPct
 }: {
@@ -143,9 +145,11 @@ export function StoryMap({
     selected: string | null;
     picks: string[];
     whatIf: number;
+    surprises: Surprise[];
     lockdownWeek: number;
     lockdownNetworkPct: number;
 }) {
+    const surpriseMarks = useSurpriseMarks(stations, surprises, whatIf);
     const selectedStation = stations.find((s) => s.id === selected) ?? null;
     const pickedStations = usePicked(stations, picks);
     const pulse = usePulse(pickedStations.length > 0);
@@ -187,6 +191,20 @@ export function StoryMap({
                     getFillColor: transitionMs
                 }
             }),
+            // Prediction view: ring the stations the prediction got most wrong (FINDINGS F11).
+            new ScatterplotLayer<SurpriseMark>({
+                id: 'surprises',
+                data: surpriseMarks,
+                getPosition: (m) => [m.station.lon, m.station.lat],
+                getRadius: (m) => radius(m.station) + 26 * scale,
+                radiusUnits: 'pixels',
+                filled: false,
+                stroked: true,
+                getLineColor: (m) => (m.pts > 0 ? [...ACCENT_RGB, 255] : [255, 255, 255, 230]),
+                lineWidthUnits: 'pixels',
+                getLineWidth: Math.max(1, 10 * scale),
+                updateTriggers: { getRadius: [week, whatIf, scale, dotScale] }
+            }),
             new ScatterplotLayer<Station>({
                 id: 'picks',
                 data: pickedStations,
@@ -225,7 +243,8 @@ export function StoryMap({
         pulse,
         scale,
         dotScale,
-        transitionMs
+        transitionMs,
+        surpriseMarks
     ]);
 
     return (
@@ -246,6 +265,58 @@ export function StoryMap({
             </Map>
         </div>
     );
+}
+
+// A station far above (+) or below (−) the prediction from neighbours' jobs, in percentage points.
+export type Surprise = { name: string; pts: number };
+type SurpriseMark = { station: Station; pts: number; labelled: boolean };
+
+// The what-if surprises from story.json, as one list. Cached per dataset so every render passes
+// the same array (the map's layers only rebuild when the data really changes).
+const surpriseCache = new WeakMap<StoryData, Surprise[]>();
+export function surprisesOf(story: StoryData): Surprise[] {
+    let list = surpriseCache.get(story);
+    if (!list) {
+        list = [...story.whatIf.above, ...story.whatIf.below].map(({ name, pts }) => ({
+            name,
+            pts
+        }));
+        surpriseCache.set(story, list);
+    }
+    return list;
+}
+
+// Labels closer than this to an already-labelled surprise are skipped (e.g. the Heathrow
+// terminals, Kenton and Northwick Park), so they never pile up; every surprise keeps its ring.
+const SURPRISE_LABEL_SPACING_KM = 4;
+
+function kmBetween(a: Station, b: Station) {
+    const x = (b.lon - a.lon) * Math.cos((((a.lat + b.lat) / 2) * Math.PI) / 180);
+    return 111.32 * Math.hypot(x, b.lat - a.lat);
+}
+
+// Only shown in the prediction view. Biggest surprises are labelled first.
+function useSurpriseMarks(stations: Station[], surprises: Surprise[], whatIf: number) {
+    return useMemo(() => {
+        if (whatIf === 0) return [];
+        const byName = new globalThis.Map(stations.map((s) => [s.name, s]));
+        const marks: SurpriseMark[] = [];
+        for (const { name, pts } of [...surprises].sort(
+            (a, b) => Math.abs(b.pts) - Math.abs(a.pts)
+        )) {
+            const station = byName.get(name);
+            if (!station) continue;
+            const labelled = marks
+                .filter((m) => m.labelled)
+                .every((m) => kmBetween(m.station, station) >= SURPRISE_LABEL_SPACING_KM);
+            marks.push({ station, pts, labelled });
+        }
+        return marks;
+    }, [stations, surprises, whatIf]);
+}
+
+function shortStationName(name: string) {
+    return name.replace('Terminals 2 & 3', 'T2&3').replace('Terminal ', 'T');
 }
 
 function usePicked(stations: Station[], picks: string[]) {
@@ -269,6 +340,7 @@ export function MapLabels({
     selected,
     picks,
     whatIf,
+    surprises,
     lockdownWeek
 }: {
     c: number;
@@ -278,15 +350,19 @@ export function MapLabels({
     selected: string | null;
     picks: string[];
     whatIf: number;
+    surprises: Surprise[];
     lockdownWeek: number;
 }) {
+    const surpriseMarks = useSurpriseMarks(stations, surprises, whatIf);
     const selectedStation = stations.find((s) => s.id === selected) ?? null;
     const pickedStations = usePicked(stations, picks);
     const pct = (s: Station) => displayPct(s, week, whatIf, lockdownWeek);
     const zoom = isZoomColumn(c);
     return (
         <>
-            {(zoom ? ZOOM_LABELS : AREA_LABELS).map((label) => (
+            {/* In the prediction view the surprise labels orient the viewer; area names would
+                collide with them. */}
+            {(whatIf > 0 ? [] : zoom ? ZOOM_LABELS : AREA_LABELS).map((label) => (
                 <TileLabel
                     key={label.text}
                     c={c}
@@ -308,6 +384,21 @@ export function MapLabels({
                     offsetY={-(radiusFor(s, pct(s)) * dotScaleFor(c) + 90)}
                 />
             ))}
+            {surpriseMarks
+                // Never on the timeline row, where the event labels are.
+                .filter((m) => m.labelled && r !== RIVER_ROW)
+                .map(({ station: s, pts }) => (
+                    <TileLabel
+                        key={`surprise-${s.id}`}
+                        c={c}
+                        r={r}
+                        text={`${shortStationName(s.name)} ${pts > 0 ? '+' : '−'}${Math.abs(Math.round(pts))}`}
+                        lon={s.lon}
+                        lat={s.lat}
+                        color={pts > 0 ? COLORS.accent : COLORS.text}
+                        offsetY={-(radiusFor(s, pct(s)) * dotScaleFor(c) + 90)}
+                    />
+                ))}
             {c === ATTRIBUTION_TILE.c && r === ATTRIBUTION_TILE.r && (
                 <div
                     style={{

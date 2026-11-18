@@ -85,7 +85,13 @@ function ControlPage() {
             lit: active === 'lockdown'
         },
         { label: '3 · Six years on', focus: 'auto', week: maxWeek, lit: active === 'recovery' },
-        { label: 'What if?', focus: 'whatif', lit: active === 'whatif' },
+        // Reality vs prediction is about the deepest lockdown week.
+        {
+            label: 'What if?',
+            focus: 'whatif',
+            week: DEEPEST_LOCKDOWN_WEEK,
+            lit: active === 'whatif'
+        },
         { label: 'So what?', focus: 'future', lit: active === 'future' },
         { label: 'Show all', focus: 'all', lit: active === 'all' }
     ];
